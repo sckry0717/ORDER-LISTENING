@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SYBIL 速食餐廳</title>
+    <style>
+        :root {
+            --primary-color: #e67e22;
+            --secondary-color: #2c3e50;
+            --bg-color: #f8f9fa;
+            --success-color: #2ecc71;
+            --info-color: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        header {
+            text-align: center;
+            padding: 25px 0;
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            margin: 10px 0 0 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* 菜單表單區塊 */
+        .menu-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .menu-title {
+            font-size: 1.4rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+
+        .order-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .item-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .item-price {
+            color: var(--primary-color);
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .input-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .qty-input {
+            width: 60px;
+            padding: 6px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn-add {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background-color: #d35400;
+        }
+
+        /* 購物車區塊 */
+        .cart-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+
+        .cart-title {
+            font-size: 1.4rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: var(--secondary-color);
+        }
+
+        .cart-items {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .btn-remove {
+            background: none;
+            border: none;
+            color: #ff4d4d;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 5px;
+        }
+
+        .btn-remove:hover {
+            text-decoration: underline;
+        }
+
+        .total-section {
+            font-size: 1.4rem;
+            font-weight: bold;
+            text-align: right;
+            margin-bottom: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 15px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .btn-pay:hover {
+            background-color: #27ae60;
+        }
+
+        .btn-pay:active {
+            transform: scale(0.98);
+        }
+
+        /* 彈出視窗底層遮罩 (Modal Overlay) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 85%;
+        }
+
+        .modal-box h2 {
+            margin-top: 0;
+            color: var(--secondary-color);
+            font-size: 1.6rem;
+        }
+
+        .pay-amount {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        /* 讀取中旋轉圈圈 */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--primary-color);
+            border-radius: 50%;
+            margin: 30px auto;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 圖示樣式 */
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 25px auto;
+        }
+
+        .bg-success {
+            background-color: var(--success-color);
+            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        }
+
+        .bg-info {
+            background-color: var(--info-color);
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.3);
+        }
+
+        /* 第二個彈出視窗的確認按鈕 */
+        .btn-close-modal {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .btn-close-modal:hover {
+            background-color: #1a252f;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>SYBIL 速食餐廳</h1>
+    <p>請選擇您想吃的餐點</p>
+</header>
+
+<div class="container">
+    <div class="menu-panel">
+        <h3 class="menu-title">餐點品項</h3>
+        <div class="order-form" id="menu-form"></div>
+    </div>
+
+    <div class="cart-panel">
+        <h3 class="cart-title">您的訂單</h3>
+        <div class="cart-items" id="cart-items">
+            <p style="color: #888; text-align: center; padding: 20px 0;">購物車目前是空的</p>
+        </div>
+        <div class="total-section">
+            總計: $<span id="total-price">0</span>
+        </div>
+        <button class="btn-pay" onclick="openPaymentModal()">確認</button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="paymentModal">
+    <div class="modal-box">
+        <h2>刷卡支付</h2>
+        <div class="pay-amount">$<span id="modal-amount">0</span></div>
+        
+        <div id="loading-view">
+            <div class="spinner"></div>
+            <p style="font-size: 1.2rem; font-weight: bold; color: #444; margin-bottom: 5px;">請感應卡片...</p>
+            <p style="color: #999; font-size: 0.85rem; margin: 0;">( 模擬中... 3秒後自動扣款 )</p>
+        </div>
+
+        <div id="success-view" style="display: none;">
+            <div class="icon-circle bg-success">✓</div>
+            <p style="font-size: 1.4rem; font-weight: bold; color: var(--success-color); margin-bottom: 8px;">刷卡成功！</p>
+            <p style="color: #666; margin: 0;">您的交易已通過審核。</p>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="rewardModal">
+    <div class="modal-box">
+        <div class="icon-circle bg-info">★</div>
+        <h2 style="color: var(--info-color); font-size: 1.8rem; margin-bottom: 10px;">答對了!很棒!</h2>
+        <p style="color: #555; margin: 0; font-size: 1.1rem;">感謝您的訂購！您的餐點已經開始製作囉。</p>
+        <button class="btn-close-modal" onclick="closeRewardModal()">好的</button>
+    </div>
+</div>
+
+<script>
+    // 翻譯為中文且打亂順序的餐點資料
+    const products = [
+        { id: 4, name: '水', price: 10 },
+        { id: 3, name: '漢堡', price: 60 },
+        { id: 6, name: '冰淇淋', price: 45 },
+        { id: 1, name: '果汁', price: 30 },
+        { id: 5, name: '熱狗堡', price: 50 },
+        { id: 2, name: '牛奶', price: 40 }
+    ];
+
+    let cart = [];
+
+    // 將菜單渲染為純文字/表單形式的列排版
+    function renderMenu() {
+        const menuFormEl = document.getElementById('menu-form');
+        menuFormEl.innerHTML = products.map(p => `
+            <div class="form-group">
+                <span class="item-label">${p.name} <span class="item-price">$${p.price}</span></span>
+                <div class="input-controls">
+                    <input type="number" id="qty-${p.id}" class="qty-input" value="1" min="1" max="20">
+                    <button class="btn-add" onclick="addToCart(${p.id})">加入</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function addToCart(id) {
+        const product = products.find(p => p.id === id);
+        const qtyInput = document.getElementById(`qty-${id}`);
+        const quantity = parseInt(qtyInput.value);
+
+        if (quantity <= 0 || isNaN(quantity)) return;
+
+        const existingItem = cart.find(item => item.id === id);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            cart.push({ ...product, quantity });
+        }
+
+        qtyInput.value = 1;
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function renderCart() {
+        const cartItemsEl = document.getElementById('cart-items');
+        const totalPriceEl = document.getElementById('total-price');
+        
+        if (cart.length === 0) {
+            cartItemsEl.innerHTML = '<p style="color: #888; text-align: center; padding: 20px 0;">購物車目前是空的</p>';
+            totalPriceEl.innerText = '0';
+            return;
+        }
+
+        let total = 0;
+        cartItemsEl.innerHTML = cart.map(item => {
+            const itemTotal = item.price * item.quantity;
+            total += itemTotal;
+            return `
+                <div class="cart-item">
+                    <div>
+                        <strong>${item.name}</strong> x ${item.quantity}
+                        <br><span style="color:#888; font-size:0.85rem;">單價: $${item.price}</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <div>$${itemTotal}</div>
+                        <button class="btn-remove" onclick="removeFromCart(${item.id})">移除</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        totalPriceEl.innerText = total;
+    }
+
+    // 雙階彈出視窗觸發邏輯
+    function openPaymentModal() {
+        if (cart.length === 0) {
+            alert('您的購物車是空的，請先加入餐點唷！');
+            return;
+        }
+
+        const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        document.getElementById('modal-amount').innerText = total;
+
+        document.getElementById('loading-view').style.display = 'block';
+        document.getElementById('success-view').style.display = 'none';
+        document.getElementById('paymentModal').classList.add('active');
+
+        // 第一步：等待 3 秒後切換至「刷卡成功！」畫面
+        setTimeout(() => {
+            document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('success-view').style.display = 'block';
+
+            // 第二步：「刷卡成功！」保持 1.5 秒後關閉，隨即彈出第二個獨立的「答對了!很棒!」視窗
+            setTimeout(() => {
+                // 關閉第一個刷卡視窗
+                document.getElementById('paymentModal').classList.remove('active');
+                
+                // 開啟第二個獨立獎勵視窗
+                document.getElementById('rewardModal').classList.add('active');
+                
+                // 在背景自動清空購物車
+                cart = [];
+                renderCart();
+            }, 1500);
+
+        }, 3000);
+    }
+
+    function closeRewardModal() {
+        document.getElementById('rewardModal').classList.remove('active');
+    }
+
+    renderMenu();
+</script>
+
+</body>
+</html>
